@@ -1,15 +1,47 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
-cmake_minimum_required (VERSION 3.16)
+﻿cmake_minimum_required(VERSION 3.16)
+project(PrestoCppLib LANGUAGES CXX)
 
-# Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
+# -------------------------
+# Global C++ settings
+# -------------------------
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-project ("PrestoCppLib")
+# -------------------------
+# Header-only library
+# -------------------------
+add_library(presto INTERFACE)
 
-# Include sub-projects.
-add_subdirectory ("PrestoCppLib")
+target_include_directories(presto INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_features(presto INTERFACE cxx_std_20)
+
+# -------------------------
+# App
+# -------------------------
+add_executable(PrestoApp PrestoCppLib.cpp)
+target_link_libraries(PrestoApp PRIVATE presto)
+
+# -------------------------
+# Benchmarks
+# -------------------------
+add_executable(presto_bench
+    benchmarks/bench_main.cpp
+)
+
+target_link_libraries(presto_bench PRIVATE presto)
+
+# -------------------------
+# Tests
+# -------------------------
+# add_executable(presto_tests tests/test_main.cpp)
+# target_link_libraries(presto_tests PRIVATE presto)
+
+# -------------------------
+# Examples
+# -------------------------
+# add_executable(presto_example examples/example_main.cpp)
+# target_link_libraries(presto_example PRIVATE presto)
