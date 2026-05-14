@@ -136,3 +136,61 @@ inline void benchmark_vector_mixed() {
     std::cout << "std::vector: " << std_time << " us\n";
     std::cout << "PrestoVector: " << presto_time << " us\n\n";
 }
+
+// Test 6: insert benchmark (worst-case scenario: inserting in the middle, causing shifts and possible reallocations)
+inline void benchmark_insert() {
+    const int N = 50'000;
+    const int OPS = 10'000;
+
+    long long std_time = measure([&]() {
+        std::vector<int> v(N, 1);
+
+        for (int i = 0; i < OPS; i++) {
+            v.insert(v.begin() + v.size() / 2, i);
+        }
+        });
+
+    long long presto_time = measure([&]() {
+        PrestoVector<int> v;
+        v.reserve(N + OPS);
+
+        for (int i = 0; i < N; i++) v.push_back(1);
+
+        for (int i = 0; i < OPS; i++) {
+            v.insert(v.begin() + v.size() / 2, i);
+        }
+        });
+
+    std::cout << "Insert benchmark:\n";
+    std::cout << "std::vector: " << std_time << " us\n";
+    std::cout << "PrestoVector: " << presto_time << " us\n\n";
+}
+
+// Test 7. erase benchmark (worst-case scenario: erasing from the middle, causing shifts)
+inline void benchmark_erase() {
+    const int N = 60'000;
+    const int OPS = 10'000;
+
+    long long std_time = measure([&]() {
+        std::vector<int> v(N, 1);
+
+        for (int i = 0; i < OPS; i++) {
+            v.erase(v.begin() + v.size() / 2);
+        }
+        });
+
+    long long presto_time = measure([&]() {
+        PrestoVector<int> v;
+        v.reserve(N);
+
+        for (int i = 0; i < N; i++) v.push_back(1);
+
+        for (int i = 0; i < OPS; i++) {
+            v.erase(v.begin() + v.size() / 2);
+        }
+        });
+
+    std::cout << "Erase benchmark:\n";
+    std::cout << "std::vector: " << std_time << " us\n";
+    std::cout << "PrestoVector: " << presto_time << " us\n\n";
+}

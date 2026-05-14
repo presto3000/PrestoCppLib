@@ -7,7 +7,8 @@
 
 
 \- `PrestoVector<T>`
-\- `PrestoString`
+
+\- `PrestoString<T>`
 
 
 

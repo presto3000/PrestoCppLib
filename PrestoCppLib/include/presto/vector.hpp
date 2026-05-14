@@ -81,6 +81,10 @@ private:
     }
 
 public:
+
+    using iterator = T*;
+    using const_iterator = const T*;
+
     // Constructors
     PrestoVector() noexcept
         : data_(nullptr), size_(0), capacity_(0) {
@@ -242,8 +246,65 @@ public:
     // Iterators
     T* begin() noexcept { return data_; }
     T* end() noexcept { return data_ + size_; }
-    const T* begin() const noexcept { return data_; }
-    const T* end() const noexcept { return data_ + size_; }
-    const T* cbegin() const noexcept { return data_; }
-    const T* cend() const noexcept { return data_ + size_; }
+    const_iterator begin() const noexcept { return data_; }
+    const_iterator end() const noexcept { return data_ + size_; }
+    const_iterator cbegin() const noexcept { return data_; }
+    const_iterator cend() const noexcept { return data_ + size_; }
+
+    iterator insert(iterator pos, const T& value) {
+        size_t index = pos - data_;
+
+        if (size_ == capacity_) {
+            size_t new_cap = capacity_ == 0 ? INITIAL_CAP : capacity_ * 2;
+            reallocate(new_cap);
+        }
+
+        pos = data_ + index;
+
+        // shift right
+        if constexpr (std::is_trivially_copyable_v<T>) {
+            std::memmove(data_ + index + 1,
+                data_ + index,
+                (size_ - index) * sizeof(T));
+        }
+        else {
+            for (size_t i = size_; i > index; --i) {
+                data_[i] = std::move(data_[i - 1]);
+            }
+        }
+
+        // construct new element
+        data_[index] = value;
+
+        ++size_;
+        return data_ + index;
+    }
+
+    iterator erase(iterator pos) {
+        size_t index = pos - data_;
+
+        if (index >= size_)
+            throw std::out_of_range("PrestoVector::erase");
+
+        // destroy element (only once)
+        if constexpr (!std::is_trivially_destructible_v<T>) {
+            data_[index].~T();
+        }
+
+        // shift left
+        if constexpr (std::is_trivially_copyable_v<T>) {
+            std::memmove(data_ + index,
+                data_ + index + 1,
+                (size_ - index - 1) * sizeof(T));
+        }
+        else {
+            for (size_t i = index; i < size_ - 1; ++i) {
+                data_[i] = std::move(data_[i + 1]);
+            }
+        }
+
+        --size_;
+        return data_ + index;
+    }
+
 };

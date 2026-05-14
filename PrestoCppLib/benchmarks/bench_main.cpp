@@ -15,6 +15,11 @@ int main() {
     benchmark_vector_mixed();
     */
 
+    benchmark_insert();
+    benchmark_erase();
+
+
+    /*
     std::cout << "=============================\n";
     std::cout << "PrestoString Benchmarks\n";
     std::cout << "=============================\n\n";
@@ -23,6 +28,9 @@ int main() {
     benchmark_concat();
     benchmark_copy();
     benchmark_mixed();
+    */
+
+
 
     return 0;
 }
