@@ -2,19 +2,10 @@
 
 #include <iostream>
 #include <string>
-#include <chrono>
+
 #include "presto/vector.hpp"
+#include "bench_utils.h"
 
-
-using Clock = std::chrono::high_resolution_clock;
-
-template <typename Func>
-long long measure(Func f) {
-    auto start = Clock::now();
-    f();
-    auto end = Clock::now();
-    return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-}
 
 // Presto Vector -------------------------------------------------------------------------------------------------
 // Test 1: push_back(growth behavior)
