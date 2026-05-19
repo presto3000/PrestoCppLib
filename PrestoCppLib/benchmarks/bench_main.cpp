@@ -1,6 +1,7 @@
 #include <iostream>
 #include "vector_bench.hpp"
 #include "string_bench.hpp"
+#include "unordered_map_bench.hpp"
 
 int main() {
     /*
@@ -15,8 +16,8 @@ int main() {
     benchmark_vector_mixed();
     */
 
-    benchmark_insert();
-    benchmark_erase();
+    // benchmark_insert();
+    // benchmark_erase();
 
 
     /*
@@ -30,6 +31,13 @@ int main() {
     benchmark_mixed();
     */
 
+
+    // Map
+    benchmark_map_insert();
+    benchmark_map_find_hit();
+    benchmark_map_find_miss();
+    benchmark_map_mixed();
+    benchmark_map_rehash();
 
 
     return 0;
