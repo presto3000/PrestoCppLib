@@ -243,6 +243,14 @@ public:
         return data_[i];
     }
 
+    T& back() {
+        return data_[size_ - 1];
+    }
+
+    const T& back() const {
+        return data_[size_ - 1];
+    }
+
     // Iterators
     T* begin() noexcept { return data_; }
     T* end() noexcept { return data_ + size_; }

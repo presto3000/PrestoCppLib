@@ -39,6 +39,10 @@ int main() {
     benchmark_map_mixed();
     benchmark_map_rehash();
 
+    benchmark_map_operator_brackets();
+    benchmark_map_contains();
+    benchmark_map_erase();
+
 
     return 0;
 }

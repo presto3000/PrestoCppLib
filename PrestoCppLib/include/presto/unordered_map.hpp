@@ -7,7 +7,10 @@
 #include <cstddef>
 #include "presto/vector.hpp"
 
-
+/*
+* A simple implementation of an unordered map (hash table) 
+    using separate chaining for collision resolution.
+*/
 
 template <typename Key, typename Value, typename Hash = std::hash<Key>>
 class PrestoUnordered_map {
@@ -25,35 +28,83 @@ public:
     }
 
     // Insert or update value
-    void insert_or_assign(const Key& key, const Value& value) {
+    template <typename V>
+    void insert_or_assign(const Key& key, V&& value) {
+        // Rehash *before* inserting so no reference is ever invalidated
+        if (would_exceed_load_factor())
+            rehash(buckets.size() * 2);
+
         auto& bucket = buckets[get_index(key)];
-
-        for (auto& kv : bucket) {
-            if (kv.key == key) {
-                kv.value = value;
-                return;
-            }
+        if (auto* kv = find_in_bucket(bucket, key)) {
+            kv->value = std::forward<V>(value);
+            return;
         }
-
-        bucket.push_back({ key, value });
+        bucket.push_back({ key, std::forward<V>(value) });
         ++num_elements;
-        ensure_load_factor();
     }
 
     Value* find(const Key& key) {
         auto& bucket = buckets[get_index(key)];
+        KeyValuePair* kv = find_in_bucket(bucket, key);  // explicit non-const type
+        return kv ? &kv->value : nullptr;
+    }
 
-        for (auto& kv : bucket) {
-            if (kv.key == key) {
-                return &kv.value;
+    const Value* find(const Key& key) const {
+        const auto& bucket = buckets[get_index(key)];
+        const KeyValuePair* kv = find_in_bucket(bucket, key);
+        return kv ? &kv->value : nullptr;
+    }
+
+    std::size_t size()  const { return num_elements; }
+    bool empty() const { return num_elements == 0; }
+
+    bool contains(const Key& key) const {
+        return find(key) != nullptr;
+    }
+
+    bool erase(const Key& key) {
+        auto& bucket = buckets[get_index(key)];
+
+        for (auto it = bucket.begin(); it != bucket.end(); ++it)
+        {
+            if (it->key == key) {
+                bucket.erase(it);
+                --num_elements;
+                return true;
             }
         }
-        return nullptr;
-    };
+        return false;
+    }
 
+    // ref to value for given key, inserts default if not found
+    Value& operator[](const Key& key) {
+        if (would_exceed_load_factor())
+            rehash(buckets.size() * 2);
+
+        auto& bucket = buckets[get_index(key)];
+        if (auto* kv = find_in_bucket(bucket, key))
+            return kv->value;
+
+        bucket.push_back({ key, Value{} });
+        ++num_elements;
+        return bucket.back().value;
+    }
+
+    // rvalue overload for operator[] to avoid unnecessary copy when key is a string or complex type
+    Value& operator[](Key&& key) {
+        if (would_exceed_load_factor())
+            rehash(buckets.size() * 2);
+
+        auto& bucket = buckets[get_index(key)];
+        if (auto* kv = find_in_bucket(bucket, key))
+            return kv->value;
+
+        bucket.push_back({ std::move(key), Value{} });
+        ++num_elements;
+        return bucket.back().value;
+    }
 
 private:
-
     struct KeyValuePair {
         Key key;
         Value value;
@@ -66,18 +117,31 @@ private:
     float max_load_factor;
     Hash hasher;
 
+    // ------------------- helper functions -------------------
+
     std::size_t get_index(const Key& key) const {
         return hasher(key) % buckets.size();
     }
 
-    void ensure_load_factor() {
-        if (buckets.empty()) return;
-        float load = static_cast<float>(num_elements) / buckets.size();
-        if (load > max_load_factor)
-        {
-            rehash(buckets.size() * 2);
-        }
+
+    KeyValuePair* find_in_bucket(Bucket& bucket, const Key& key) {
+        for (auto& kv : bucket)
+            if (kv.key == key) return &kv;
+        return nullptr;
     }
+
+    const KeyValuePair* find_in_bucket(const Bucket& bucket,
+        const Key& key) const {
+        for (const auto& kv : bucket)
+            if (kv.key == key) return &kv;
+        return nullptr;
+    }
+
+    bool would_exceed_load_factor() const {
+        if (buckets.empty()) return false;
+        return static_cast<float>(num_elements + 1) / buckets.size() > max_load_factor;
+    }
+
 
     void rehash(std::size_t new_bucket_count)
     {

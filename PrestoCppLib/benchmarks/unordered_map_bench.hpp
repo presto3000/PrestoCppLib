@@ -126,3 +126,91 @@ inline void benchmark_map_rehash() {
     std::cout << "Presto rehash stress test:\n";
     std::cout << "PrestoUnordered_map: " << presto_time << " us\n\n";
 }
+
+inline void benchmark_map_operator_brackets() {
+    const int N = 500000;
+
+    long long std_time = measure([&]() {
+        std::unordered_map<int, int> m;
+
+        for (int i = 0; i < N; i++) {
+            auto& x = m[i];
+            x = i;
+            x += 1;
+        }
+        });
+
+    long long presto_time = measure([&]() {
+        PrestoUnordered_map<int, int> m;
+
+        for (int i = 0; i < N; i++) {
+            auto& x = m[i];
+            x = i;
+            x += 1;
+        }
+        });
+
+    std::cout << "operator[] test:\n";
+    std::cout << "std::unordered_map: " << std_time << " us\n";
+    std::cout << "PrestoUnordered_map: " << presto_time << " us\n\n";
+}
+
+inline void benchmark_map_erase() {
+    const int N = 300000;
+
+    long long std_time = measure([&]() {
+        std::unordered_map<int, int> m;
+
+        for (int i = 0; i < N; i++) {
+            m[i] = i;
+        }
+
+        for (int i = 0; i < N; i++) {
+            m.erase(i);
+        }
+        });
+
+    long long presto_time = measure([&]() {
+        PrestoUnordered_map<int, int> m;
+
+        for (int i = 0; i < N; i++) {
+            m.insert_or_assign(i, i);
+        }
+
+        for (int i = 0; i < N; i++) {
+            m.erase(i);
+        }
+        });
+
+    std::cout << "erase test:\n";
+    std::cout << "std::unordered_map: " << std_time << " us\n";
+    std::cout << "PrestoUnordered_map: " << presto_time << " us\n\n";
+}
+
+inline void benchmark_map_contains() {
+    const int N = 500000;
+
+    std::unordered_map<int, int> std_map;
+    PrestoUnordered_map<int, int> presto_map;
+
+    for (int i = 0; i < N; i++) {
+        std_map[i] = i;
+        presto_map.insert_or_assign(i, i);
+    }
+
+    long long std_time = measure([&]() {
+        for (int i = 0; i < N; i++) {
+            volatile bool x = std_map.find(i) != std_map.end();
+        }
+        });
+
+    long long presto_time = measure([&]() {
+        for (int i = 0; i < N; i++) {
+            volatile bool x = presto_map.contains(i);
+        }
+        });
+
+    std::cout << "contains test:\n";
+    std::cout << "std::unordered_map: " << std_time << " us\n";
+    std::cout << "PrestoUnordered_map: " << presto_time << " us\n\n";
+}
