@@ -2,6 +2,7 @@
 #include "vector_bench.hpp"
 #include "string_bench.hpp"
 #include "unordered_map_bench.hpp"
+#include "sharedweak_bench.hpp"
 
 int main() {
     /*
@@ -33,16 +34,18 @@ int main() {
 
 
     // Map
-    benchmark_map_insert();
-    benchmark_map_find_hit();
-    benchmark_map_find_miss();
-    benchmark_map_mixed();
-    benchmark_map_rehash();
-
-    benchmark_map_operator_brackets();
-    benchmark_map_contains();
-    benchmark_map_erase();
-
+    // benchmark_map_insert();
+    // benchmark_map_find_hit();
+    // benchmark_map_find_miss();
+    // benchmark_map_mixed();
+    // benchmark_map_rehash();
+    // 
+    // benchmark_map_operator_brackets();
+    // benchmark_map_contains();
+    // benchmark_map_erase();
+    
+    // Shared / Weak Ptr
+    run_presto_ptr_benchmarks();
 
     return 0;
 }

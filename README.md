@@ -12,6 +12,12 @@
 
 \- `PrestoUnordered_map<T>`
 
+\- `PrestoUniquePtr<T>`
+
+\- `PrestoSharedPtr<T>`
+
+\- `PrestoWeakPtr<T>`
+
 
 
 
