@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(OpenSSL REQUIRED)
+
 # -------------------------
 # Header-only library
 # -------------------------
@@ -18,6 +20,8 @@ target_include_directories(presto INTERFACE
 )
 
 target_compile_features(presto INTERFACE cxx_std_20)
+
+target_link_libraries(presto INTERFACE OpenSSL::SSL OpenSSL::Crypto)
 
 # -------------------------
 # App

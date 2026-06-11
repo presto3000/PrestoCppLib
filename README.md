@@ -1,28 +1,40 @@
 # PrestoCppLib
 
+A modern C++ header-only library providing custom containers, smart pointers, and utilities including SHA-256 file hashing.
 
+---
 
-\## Features
+## ✨ Features
 
+### Containers
+- `PrestoVector<T>`
+- `PrestoString`
+- `PrestoUnorderedMap<T>`
 
+### Smart Pointers
+- `PrestoUniquePtr<T>`
+- `PrestoSharedPtr<T>`
+- `PrestoWeakPtr<T>`
 
-\- `PrestoVector<T>`
+### Hashing
+- `sha256File(path)` — SHA-256 file hashing using OpenSSL
 
-\- `PrestoString<T>`
+### Benchmarks
+- Performance benchmarks included in `/benchmarks`
 
-\- `PrestoUnordered_map<T>`
+### Build System
+- CMake-based build system
+- Header-only design (no compilation required for library)
 
-\- `PrestoUniquePtr<T>`
+---
 
-\- `PrestoSharedPtr<T>`
+## Dependencies
 
-\- `PrestoWeakPtr<T>`
+This library uses **OpenSSL** for hashing functionality:
 
+- Required: OpenSSL (`libssl`, `libcrypto`)
 
-
-
-
-\- Benchmarks
-
-\- CMake build system
+### Install via vcpkg (recommended)
+```bash
+vcpkg install openssl
 

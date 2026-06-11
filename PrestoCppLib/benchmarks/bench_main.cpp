@@ -45,7 +45,7 @@ int main() {
     // benchmark_map_erase();
     
     // Shared / Weak Ptr
-    run_presto_ptr_benchmarks();
+    // run_presto_ptr_benchmarks();
 
     return 0;
 }
