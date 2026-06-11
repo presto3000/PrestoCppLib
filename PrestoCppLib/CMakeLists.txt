@@ -47,5 +47,8 @@ target_link_libraries(presto_bench PRIVATE presto)
 # -------------------------
 # Examples
 # -------------------------
-# add_executable(presto_example examples/example_main.cpp)
-# target_link_libraries(presto_example PRIVATE presto)
+add_executable(presto_examples 
+    examples/example_main.cpp
+    examples/examples.cpp
+)
+target_link_libraries(presto_examples PRIVATE presto)

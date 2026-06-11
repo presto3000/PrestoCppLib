@@ -3,6 +3,7 @@
 #include "string_bench.hpp"
 #include "unordered_map_bench.hpp"
 #include "sharedweak_bench.hpp"
+#include "threadpool_bench.hpp"
 
 int main() {
     /*
@@ -46,6 +47,18 @@ int main() {
     
     // Shared / Weak Ptr
     // run_presto_ptr_benchmarks();
+
+	// --- ThreadPool ---
+    // benchmark_threadpool_basic();
+    // benchmark_threadpool_heavy();
+    // benchmark_std_async();
+    // benchmark_sequential();
+
+    double seq = benchmark_sequential2();
+    double tp = benchmark_threadpool2();
+
+    std::cout << "Sequential result: " << seq << "\n";
+    std::cout << "ThreadPool result: " << tp << "\n";
 
     return 0;
 }
