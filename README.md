@@ -10,6 +10,7 @@ A modern C++ header-only library providing custom containers, smart pointers, co
 - `PrestoVector<T>`
 - `PrestoString`
 - `PrestoUnorderedMap<T>`
+- `LinkedList<T>`
 
 ### Smart Pointers
 - `PrestoUniquePtr<T>`

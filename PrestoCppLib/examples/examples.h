@@ -8,4 +8,7 @@ public:
 	void RunFileHash();
 	// Thread Pool Example
 	void RunThreadPool1();
+
+	// Duplicates example
+	void RunDuplicatesExample();
 };

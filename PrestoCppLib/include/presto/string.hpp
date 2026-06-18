@@ -157,6 +157,11 @@ public:
 		result.data_[result.size_] = '\0';
 		return result;
 	}
+
+	bool operator==(const PrestoString& other) const {
+		if (size_ != other.size_) return false;
+		return std::memcmp(data_, other.data_, size_) == 0;
+	}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PrestoString& str)
@@ -164,3 +169,17 @@ inline std::ostream& operator<<(std::ostream& os, const PrestoString& str)
 	os << str.c_str();
 	return os;
 }
+
+struct PrestoStringHash {
+	size_t operator()(const PrestoString& s) const {
+		size_t hash = 0;
+		const char* str = s.c_str();
+
+		while (*str) {
+			hash = hash * 31 + static_cast<unsigned char>(*str);
+			++str;
+		}
+
+		return hash;
+	}
+};

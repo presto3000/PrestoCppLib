@@ -4,6 +4,7 @@
 #include "unordered_map_bench.hpp"
 #include "sharedweak_bench.hpp"
 #include "threadpool_bench.hpp"
+#include "ll_bench.hpp"
 
 int main() {
     /*
@@ -54,11 +55,13 @@ int main() {
     // benchmark_std_async();
     // benchmark_sequential();
 
-    double seq = benchmark_sequential2();
-    double tp = benchmark_threadpool2();
+    // double seq = benchmark_sequential2();
+    // double tp = benchmark_threadpool2();
+    // 
+    // std::cout << "Sequential result: " << seq << "\n";
+    // std::cout << "ThreadPool result: " << tp << "\n";
 
-    std::cout << "Sequential result: " << seq << "\n";
-    std::cout << "ThreadPool result: " << tp << "\n";
+    run_all_linked_list_benchmarks();
 
     return 0;
 }
