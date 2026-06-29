@@ -7,7 +7,9 @@ int main()
 	// example1.RunFileHash();
 	// ex.RunThreadPool1();
 	
-	ex.RunDuplicatesExample();
+	// ex.RunDuplicatesExample();
+
+	ex.example_RingBuffer_all();
 
 	return 0;
 

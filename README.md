@@ -11,6 +11,7 @@ A modern C++ header-only library providing custom containers, smart pointers, co
 - `PrestoString`
 - `PrestoUnorderedMap<T>`
 - `LinkedList<T>`
+- `RingBuffer<T, std::size_t>`
 
 ### Smart Pointers
 - `PrestoUniquePtr<T>`
@@ -38,7 +39,11 @@ This library uses **OpenSSL** for hashing functionality:
 
 - Required: OpenSSL (`libssl`, `libcrypto`)
 
+### Examples
+- examples included in `/examples`
+
 ### Install via vcpkg (recommended)
 ```bash
 vcpkg install openssl
+
 
