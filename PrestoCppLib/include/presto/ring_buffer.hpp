@@ -23,10 +23,6 @@
  * Thread Safety: All public methods are thread-safe. The internal mutex
  * protects all access to the buffer and indices.
  *
- * @example
- * ring_buffer<int, 10> rb;
- * rb.push(42);
- * int value = rb.blocking_pop();  // Waits if buffer is empty
  */
 template <typename ValueType, std::size_t Capacity> requires (Capacity > 0)
 class RingBuffer

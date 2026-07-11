@@ -7,6 +7,7 @@
 #include <presto/string.hpp>
 #include <presto/ring_buffer.hpp>
 
+
 void Example::RunFileHash()
 {
 	std::string hash = hashing::sha256File("TestFile1.txt");
@@ -385,4 +386,305 @@ void Example::example_RingBuffer_all()
 	std::cout << "=============================\n";
 	std::cout << " RingBuffer END SUITE\n";
 	std::cout << "=============================\n\n";
+}
+
+
+// ========================================================================
+// EXAMPLE 1: Basic Single-Threaded Usage
+// ========================================================================
+void Example::example_LfQueue_basic()
+{
+    std::cout << "\n=== EXAMPLE 1: Basic Usage ===\n";
+
+    lf::Queue<int> q(8); // capacity must be a power of two
+
+    for (int i = 10; i <= 50; i += 10)
+    {
+        bool ok = q.try_push(i);
+        std::cout << "Pushed " << i << " -> " << (ok ? "ok" : "FULL")
+            << ", approx size: " << q.approximate_size() << "\n";
+    }
+
+    int val;
+    if (q.try_pop(val))
+    {
+        std::cout << "Popped: " << val << "\n";
+    }
+
+    std::cout << "Capacity: " << q.capacity() << "\n";
+    std::cout << "Utilization: " << q.utilization() << "%\n";
+}
+
+// ========================================================================
+// EXAMPLE 2: Behavior When Full (no overwrite -- unlike RingBuffer)
+// ========================================================================
+void Example::example_LfQueue_full_behavior()
+{
+    std::cout << "\n=== EXAMPLE 2: Behavior When Full ===\n";
+
+    lf::Queue<int> q(4);
+    std::cout << "Queue capacity: " << q.capacity() << "\n";
+
+    for (int i = 1; i <= 6; ++i)
+    {
+        bool ok = q.try_push(i * 100);
+        std::cout << "try_push(" << (i * 100) << ") -> "
+            << (ok ? "ok" : "REJECTED (queue full)")
+            << ", approx size: " << q.approximate_size() << "\n";
+    }
+
+    std::cout << "Notice: unlike a RingBuffer that overwrites the oldest\n"
+        "entry, lf::Queue never silently discards data -- once\n"
+        "full, try_push() just reports failure and the caller\n"
+        "decides what to do (retry, drop, block, etc.).\n";
+}
+
+// ========================================================================
+// EXAMPLE 3: Non-Blocking Try Operations
+// ========================================================================
+void Example::example_LfQueue_try_operations()
+{
+    std::cout << "\n=== EXAMPLE 3: Non-Blocking Try Operations ===\n";
+
+    lf::Queue<int> q(4);
+
+    int val;
+    if (q.try_pop(val))
+    {
+        std::cout << "Popped: " << val << "\n";
+    }
+    else
+    {
+        std::cout << "Queue was empty, try_pop failed as expected\n";
+    }
+
+    q.try_push(42);
+    if (q.try_pop(val))
+    {
+        std::cout << "Successfully popped: " << val << "\n";
+    }
+
+    if (!q.try_pop(val))
+    {
+        std::cout << "Queue empty again, try_pop correctly failed\n";
+    }
+}
+
+// ========================================================================
+// EXAMPLE 4: Move Semantics
+// ========================================================================
+void Example::example_LfQueue_move_semantics()
+{
+    std::cout << "\n=== EXAMPLE 4: Move Semantics ===\n";
+
+    lf::Queue<std::string> q(8);
+
+    // NOTE: only *move* push compiles here, not copy push. try_push()
+    // requires T's constructor to be non-throwing (see the
+    // static_assert in lf_queue.hpp) because if it threw after the
+    // slot's CAS had already claimed it, the queue would be
+    // permanently stuck. std::string's copy constructor CAN throw
+    // (it allocates), so `q.try_push(some_lvalue_string)` is a
+    // compile error by design -- only moves/rvalues are accepted:
+    std::string s2 = "move";
+    q.try_push(std::move(s2));
+    std::cout << "After move push, s2 = \"" << s2 << "\" (moved-from)\n";
+
+    q.try_push(std::string("temporary")); // a prvalue is moved too
+
+    std::cout << "Approx size: " << q.approximate_size() << "\n";
+
+    std::string out;
+    while (q.try_pop(out))
+    {
+        std::cout << "  popped: \"" << out << "\"\n";
+    }
+}
+
+// ========================================================================
+// EXAMPLE 5: Timeout Pop (built on try_pop, since lf::Queue has no
+// blocking API of its own)
+// ========================================================================
+void Example::example_LfQueue_timeout()
+{
+    std::cout << "\n=== EXAMPLE 5: Timeout Pop ===\n";
+
+    lf::Queue<int> q(4);
+    q.try_push(42);
+
+    int val;
+    if (try_pop_for(q, val, std::chrono::milliseconds(100)))
+    {
+        std::cout << "Successfully popped: " << val << "\n";
+    }
+    else
+    {
+        std::cout << "Error: timed out (unexpected here)\n";
+    }
+
+    std::cout << "Waiting up to 100ms for data that never arrives...\n";
+    if (!try_pop_for(q, val, std::chrono::milliseconds(100)))
+    {
+        std::cout << "Got expected timeout\n";
+    }
+}
+
+// ========================================================================
+// EXAMPLE 6: Producer-Consumer Pattern
+// ========================================================================
+void Example::example_LfQueue_producer_consumer()
+{
+    std::cout << "\n=== EXAMPLE 6: Producer-Consumer (Multi-threaded) ===\n";
+
+    lf::Queue<int> q(16);
+
+    auto producer = [&q]() {
+        for (int i = 1; i <= 5; ++i)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            while (!q.try_push(i * 100))
+            {
+                std::this_thread::yield(); // full: back off and retry
+            }
+            std::cout << "  [Producer] Pushed " << (i * 100) << "\n";
+        }
+        };
+
+    auto consumer = [&q]() {
+        for (int i = 0; i < 5; ++i)
+        {
+            int val = blocking_pop(q);
+            std::cout << "  [Consumer] Popped " << val << "\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        };
+
+    std::thread t1(producer);
+    std::thread t2(consumer);
+    t1.join();
+    t2.join();
+
+    std::cout << "Producer-consumer completed\n";
+}
+
+// ========================================================================
+// EXAMPLE 7: Multiple Producers, One Consumer
+// ========================================================================
+void Example::example_LfQueue_multiple_producers()
+{
+    std::cout << "\n=== EXAMPLE 7: Multiple Producers ===\n";
+
+    lf::Queue<int> q(32);
+
+    auto producer = [&q](int id) {
+        for (int i = 0; i < 3; ++i)
+        {
+            int val = id * 1000 + i;
+            while (!q.try_push(val))
+            {
+                std::this_thread::yield();
+            }
+            std::cout << "  [Producer " << id << "] Pushed " << val << "\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        }
+        };
+
+    auto consumer = [&q]() {
+        for (int i = 0; i < 9; ++i)
+        {
+            int val = blocking_pop(q);
+            std::cout << "  [Consumer] Got " << val << "\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        };
+
+    std::vector<std::thread> producers;
+    for (int id = 1; id <= 3; ++id)
+    {
+        producers.emplace_back(producer, id);
+    }
+    std::thread consumer_thread(consumer);
+
+    for (auto& t : producers) t.join();
+    consumer_thread.join();
+
+    std::cout << "Multi-producer demo completed\n";
+}
+
+// ========================================================================
+// EXAMPLE 8: Bounded Buffer Behavior Under Load (no auto-discard)
+// ========================================================================
+void Example::example_LfQueue_bounded_buffer()
+{
+    std::cout << "\n=== EXAMPLE 8: Bounded Buffer Under Load ===\n";
+
+    lf::Queue<std::string> logs(4); // small on purpose
+
+    int accepted = 0, rejected = 0;
+    for (int i = 1; i <= 7; ++i)
+    {
+        bool ok = logs.try_push("Log message #" + std::to_string(i));
+        ok ? ++accepted : ++rejected;
+        std::cout << "Log " << i << " -> " << (ok ? "accepted" : "REJECTED")
+            << ", approx size: " << logs.approximate_size() << "\n";
+    }
+
+    std::cout << accepted << " accepted, " << rejected << " rejected.\n"
+        "Notice: unlike RingBuffer's auto-discard-oldest, a\n"
+        "real logger over lf::Queue would need its own policy\n"
+        "for what to do when try_push() fails (e.g. drop-newest,\n"
+        "block briefly, or spill to a slower path).\n";
+
+    std::cout << "Draining remaining logs:\n";
+    std::string entry;
+    while (logs.try_pop(entry))
+    {
+        std::cout << "  " << entry << "\n";
+    }
+}
+
+// ========================================================================
+// EXAMPLE 9: Queue Statistics (all advisory / best-effort)
+// ========================================================================
+void Example::example_LfQueue_statistics()
+{
+    std::cout << "\n=== EXAMPLE 9: Queue Statistics (advisory) ===\n";
+
+    lf::Queue<double> measurements(128);
+
+    for (int i = 0; i < 35; ++i)
+    {
+        measurements.try_push(20.5 + (i % 10) * 0.5);
+    }
+
+    std::cout << "Queue Statistics:\n";
+    std::cout << "  Capacity:            " << measurements.capacity() << "\n";
+    std::cout << "  Approx size:         " << measurements.approximate_size() << "\n";
+    std::cout << "  Approx utilization:  " << measurements.utilization() << "%\n";
+    std::cout << "  Approx empty?        " << (measurements.approximate_empty() ? "Yes" : "No") << "\n";
+    std::cout << "  Approx full?         " << (measurements.approximate_full() ? "Yes" : "No") << "\n";
+    std::cout << "(\"Approx\" because other threads could push/pop between\n"
+        " reading this value and acting on it -- treat it as a\n"
+        " metrics snapshot, never as a precondition for correctness.)\n";
+}
+
+void Example::example_LfQueue_all()
+{
+    std::cout << "=============================\n";
+    std::cout << " lf::Queue EXAMPLE SUITE\n";
+    std::cout << "=============================\n";
+
+    example_LfQueue_basic();
+    example_LfQueue_full_behavior();
+    example_LfQueue_try_operations();
+    example_LfQueue_move_semantics();
+    example_LfQueue_timeout();
+    example_LfQueue_producer_consumer();
+    example_LfQueue_multiple_producers();
+    example_LfQueue_bounded_buffer();
+    example_LfQueue_statistics();
+
+    std::cout << "=============================\n";
+    std::cout << " lf::Queue END SUITE\n";
+    std::cout << "=============================\n\n";
 }

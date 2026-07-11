@@ -9,7 +9,9 @@ int main()
 	
 	// ex.RunDuplicatesExample();
 
-	ex.example_RingBuffer_all();
+	// ex.example_RingBuffer_all();
+
+	ex.example_LfQueue_all();
 
 	return 0;
 
