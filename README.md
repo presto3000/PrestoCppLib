@@ -12,6 +12,7 @@ A modern C++ header-only library providing custom containers, smart pointers, co
 - `PrestoUnorderedMap<T>`
 - `LinkedList<T>`
 - `RingBuffer<T, std::size_t>`
+- `lf::Queue<T>`
 
 ### Smart Pointers
 - `PrestoUniquePtr<T>`
