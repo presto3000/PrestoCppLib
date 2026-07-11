@@ -299,7 +299,7 @@ namespace lf // lock free
         // pos & mask instead of the normal modulo operation pos % capacity_
         static size_t validate_capacity(size_t capacity)
         {
-            if (capacity == 0 || (capacity & (capacity - 1)) != 0)
+            if (capacity < 2 || (capacity & (capacity - 1)) != 0)
             {
                 throw std::invalid_argument(
                     "lf::Queue capacity must be a non-zero power of two");

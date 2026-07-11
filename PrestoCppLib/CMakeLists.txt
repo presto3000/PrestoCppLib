@@ -41,8 +41,11 @@ target_link_libraries(presto_bench PRIVATE presto)
 # -------------------------
 # Tests
 # -------------------------
-# add_executable(presto_tests tests/test_main.cpp)
-# target_link_libraries(presto_tests PRIVATE presto)
+add_executable(presto_tests 
+    tests/test_main.cpp
+    tests/test_lf_queue_mpmc.cpp
+)
+target_link_libraries(presto_tests PRIVATE presto)
 
 # -------------------------
 # Examples
