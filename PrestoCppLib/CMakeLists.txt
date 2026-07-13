@@ -44,6 +44,7 @@ target_link_libraries(presto_bench PRIVATE presto)
 add_executable(presto_tests 
     tests/test_main.cpp
     tests/test_lf_queue_mpmc.cpp
+    tests/test_ring_buffer.cpp
 )
 target_link_libraries(presto_tests PRIVATE presto)
 

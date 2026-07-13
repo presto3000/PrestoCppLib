@@ -38,9 +38,34 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace mini_test
 {
+    struct TestCase
+    {
+        const char* suite;
+        const char* name;
+        void (*fn)();
+    };
+
+    inline std::vector<TestCase>& registry()
+    {
+        static std::vector<TestCase> tests;
+        return tests;
+    }
+
+    // Constructing one of these at namespace scope registers a test.
+    // TEST() below creates one automatically for every test function.
+    struct Registrar
+    {
+        Registrar(const char* suite, const char* name, void (*fn)())
+        {
+            registry().push_back({ suite, name, fn });
+        }
+    };
+
+
     inline int& checks_run()
     {
         static int value = 0;
@@ -103,6 +128,42 @@ namespace mini_test
         }
     }
 
+    // Runs every registered test, printing a suite header whenever the
+    // suite changes from the previous test (suites stay grouped as long as
+    // each suite's tests are registered contiguously, which they are, since
+    // registration order follows the order the linker pulls in object files).
+    inline void run_all()
+    {
+        const char* last_suite = nullptr;
+        for (const TestCase& tc : registry())
+        {
+            if (!last_suite || std::strcmp(last_suite, tc.suite) != 0)
+            {
+                std::cout << " // ------------------------------- " << tc.suite
+                    << " --------------------------------- // \n";
+                last_suite = tc.suite;
+            }
+            run_test(tc.name, tc.fn);
+        }
+    }
+
+    // Runs only the tests belonging to one suite (handy for iterating on a
+    // single file, e.g. ./test_main ring_buffer). Returns false if no test
+    // registered under that suite name was found.
+    inline bool run_suite(const char* suite)
+    {
+        bool found = false;
+        for (const TestCase& tc : registry())
+        {
+            if (std::strcmp(tc.suite, suite) == 0)
+            {
+                found = true;
+                run_test(tc.name, tc.fn);
+            }
+        }
+        return found;
+    }
+
     // Prints the final tally and returns a process exit code:
     // 0 if every check passed, 1 if any failed.
     inline int summary()
@@ -121,7 +182,23 @@ namespace mini_test
     }
 }
 
+#ifndef MINI_TEST_SUITE_NAME
+#define MINI_TEST_SUITE_NAME "default"
+#endif
+
+#define MINI_TEST_CAT_(a, b) a##b
+#define MINI_TEST_CAT(a, b) MINI_TEST_CAT_(a, b)
+
 #define CHECK(cond) ::mini_test::check((cond), #cond, __FILE__, __LINE__)
 #define CHECK_EQ(a, b) ::mini_test::check_eq((a), (b), #a, #b, __FILE__, __LINE__)
-#define TEST(name) void name()
+
+// TEST(name) defines the test function AND self-registers it, tagged with
+// MINI_TEST_SUITE_NAME (define that macro before including this header).
+#define TEST(name) \
+    void name(); \
+    namespace { ::mini_test::Registrar MINI_TEST_CAT(_mini_test_registrar_, name){ MINI_TEST_SUITE_NAME, #name, name }; } \
+    void name()
+
+// Kept for backwards compatibility / running one test ad-hoc by hand.
+// No longer required for a test to be picked up by run_all()/run_suite().
 #define RUN_TEST(name) ::mini_test::run_test(#name, name)

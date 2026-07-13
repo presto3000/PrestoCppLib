@@ -24,6 +24,8 @@
 #include <thread>
 #include <vector>
 
+#define MINI_TEST_SUITE_NAME "lf_queue_mpmc"
+
 // ============================================================================
 // Construction / validation
 // ============================================================================

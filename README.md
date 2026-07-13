@@ -28,6 +28,9 @@ A modern C++ header-only library providing custom containers, smart pointers, co
 ### Benchmarks
 - Performance benchmarks included in `/benchmarks`
 
+### Tests
+- tests included in `/tests`
+
 ### Build System
 - CMake-based build system
 - Header-only design
